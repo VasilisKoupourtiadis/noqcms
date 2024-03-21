@@ -1,45 +1,55 @@
-import React from 'react';
-import { Editor, EditorState, RichUtils, ContentState, getDefaultKeyBinding } from 'draft-js'; // Importera ContentState
-import './RichText.css';
+import React from "react";
+import {
+  Editor,
+  EditorState,
+  RichUtils,
+  ContentState,
+  convertToRaw,
+  convertFromRaw,
+} from "draft-js"; // Importera ContentState
+import "./RichText.css";
+import { stateToHTML } from "draft-js-export-html";
 
 class RichEditor extends React.Component {
   constructor(props) {
     super(props);
-    
 
-
-    this.state = { editorState: EditorState.createWithContent(ContentState.createFromText(props.text)) };
-    this.onChange = editorState => this.setState({ editorState });
+    this.state = {
+      editorState: EditorState.createWithContent(
+        convertFromRaw(JSON.parse(props.text))
+      ),
+    };
 
     this.handleKeyCommand = this.handleKeyCommand.bind(this);
     this.toggleBlockType = this.toggleBlockType.bind(this);
     this.toggleInlineStyle = this.toggleInlineStyle.bind(this);
   }
 
+  onChange = (editorState) => {
+    const contentState = editorState.getCurrentContent();
+    console.log("content state", JSON.stringify(convertToRaw(contentState)));
+    this.props.onChangeText(JSON.stringify(convertToRaw(contentState)));
+    this.setState({
+      editorState,
+    });
+  };
+
   handleKeyCommand(command, editorState) {
     const newState = RichUtils.handleKeyCommand(editorState, command);
     if (newState) {
       this.onChange(newState);
-      return 'handled';
+      return "handled";
     }
-    return 'not-handled';
+    return "not-handled";
   }
 
   toggleBlockType(blockType) {
-    this.onChange(
-      RichUtils.toggleBlockType(
-        this.state.editorState,
-        blockType
-      )
-    );
+    this.onChange(RichUtils.toggleBlockType(this.state.editorState, blockType));
   }
 
   toggleInlineStyle(inlineStyle) {
     this.onChange(
-      RichUtils.toggleInlineStyle(
-        this.state.editorState,
-        inlineStyle
-      )
+      RichUtils.toggleInlineStyle(this.state.editorState, inlineStyle)
     );
   }
 
@@ -47,37 +57,37 @@ class RichEditor extends React.Component {
     const { editorState } = this.state;
 
     return (
-      <div className="RichEditor-root">
-        <BlockStyleControls
-          editorState={editorState}
-          onToggle={this.toggleBlockType}
-        />
-        <InlineStyleControls
-          editorState={editorState}
-          onToggle={this.toggleInlineStyle}
-        />
-        <div className="RichEditor-editor">
-          <Editor
+      <>
+        <div className="RichEditor-root hidden">
+          <BlockStyleControls
             editorState={editorState}
-            onChange={this.onChange}
+            onToggle={this.toggleBlockType}
           />
+          <InlineStyleControls
+            editorState={editorState}
+            onToggle={this.toggleInlineStyle}
+          />
+          <div className="RichEditor-editor">
+            <Editor editorState={editorState} onChange={this.onChange} />
+          </div>
         </div>
-      </div>
+        <div>{stateToHTML(this.state.editorState.getCurrentContent())}</div>
+      </>
     );
   }
 }
 
 const BLOCK_TYPES = [
-  { label: 'H1', style: 'header-one' },
-  { label: 'H2', style: 'header-two' },
-  { label: 'H3', style: 'header-three' },
-  { label: 'H4', style: 'header-four' },
-  { label: 'H5', style: 'header-five' },
-  { label: 'H6', style: 'header-six' },
-  { label: 'Blockquote', style: 'blockquote' },
-  { label: 'UL', style: 'unordered-list-item' },
-  { label: 'OL', style: 'ordered-list-item' },
-  { label: 'Code Block', style: 'code-block' },
+  { label: "H1", style: "header-one" },
+  { label: "H2", style: "header-two" },
+  { label: "H3", style: "header-three" },
+  { label: "H4", style: "header-four" },
+  { label: "H5", style: "header-five" },
+  { label: "H6", style: "header-six" },
+  { label: "Blockquote", style: "blockquote" },
+  { label: "UL", style: "unordered-list-item" },
+  { label: "OL", style: "ordered-list-item" },
+  { label: "Code Block", style: "code-block" },
 ];
 
 const BlockStyleControls = (props) => {
@@ -90,7 +100,7 @@ const BlockStyleControls = (props) => {
 
   return (
     <div className="RichEditor-controls">
-      {BLOCK_TYPES.map((type) =>
+      {BLOCK_TYPES.map((type) => (
         <StyleButton
           key={type.label}
           active={type.style === blockType}
@@ -98,16 +108,16 @@ const BlockStyleControls = (props) => {
           onToggle={props.onToggle}
           style={type.style}
         />
-      )}
+      ))}
     </div>
   );
 };
 
 const INLINE_STYLES = [
-  { label: 'Bold', style: 'BOLD' },
-  { label: 'Italic', style: 'ITALIC' },
-  { label: 'Underline', style: 'UNDERLINE' },
-  { label: 'Monospace', style: 'CODE' },
+  { label: "Bold", style: "BOLD" },
+  { label: "Italic", style: "ITALIC" },
+  { label: "Underline", style: "UNDERLINE" },
+  { label: "Monospace", style: "CODE" },
 ];
 
 const InlineStyleControls = (props) => {
@@ -115,7 +125,7 @@ const InlineStyleControls = (props) => {
 
   return (
     <div className="RichEditor-controls">
-      {INLINE_STYLES.map((type) =>
+      {INLINE_STYLES.map((type) => (
         <StyleButton
           key={type.label}
           active={currentStyle.has(type.style)}
@@ -123,12 +133,12 @@ const InlineStyleControls = (props) => {
           onToggle={props.onToggle}
           style={type.style}
         />
-      )}
+      ))}
     </div>
   );
 };
 
-class StyleButton extends React.Component {
+export class StyleButton extends React.Component {
   constructor() {
     super();
     this.onToggle = (e) => {
@@ -138,9 +148,9 @@ class StyleButton extends React.Component {
   }
 
   render() {
-    let className = 'RichEditor-styleButton';
+    let className = "RichEditor-styleButton";
     if (this.props.active) {
-      className += ' RichEditor-activeButton';
+      className += " RichEditor-activeButton";
     }
 
     return (

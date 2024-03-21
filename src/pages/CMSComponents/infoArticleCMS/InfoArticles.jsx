@@ -1,9 +1,9 @@
-import { useState, useEffect  } from 'react';
-import useCrud from '../customHooks/useCrud';
-import CollapsibleContainer from '../cmsDashboardLayout/CollapsibleContainer';
-import ArticleForm from './InfoArticleForm';
-import InfoArticlesDeletion from '../infoArticleCMS/InfoArticlesDeletion';
-import RichEditor from '../RichTextEditor';
+import { useState, useEffect } from "react";
+import useCrud from "../customHooks/useCrud";
+import CollapsibleContainer from "../cmsDashboardLayout/CollapsibleContainer";
+import ArticleForm from "./InfoArticleForm";
+import InfoArticlesDeletion from "../infoArticleCMS/InfoArticlesDeletion";
+import { convertFromRaw } from "draft-js";
 
 // In CMS page, in Info Aricles tab
 // We display the four articles using the code here. We use customHook useCrud to retrieve the articles from Firestore.
@@ -16,19 +16,19 @@ const InfoArticles = () => {
     error,
     data: articles,
     deleteItem: deleteArticle,
-    fetchData 
-  } = useCrud('infoContent');
+    fetchData,
+  } = useCrud("infoContent");
 
   useEffect(() => {
     fetchData();
-  },[]);
+  }, []);
 
   const handleDelete = async (deletedArticleId) => {
     try {
       await deleteArticle(deletedArticleId);
       setSelectedArticle(null);
     } catch (error) {
-      console.error('Error deleting article:', error);
+      console.error("Error deleting article:", error);
     }
   };
 
@@ -73,10 +73,10 @@ const InfoArticles = () => {
       </button>
       <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-4">
         {loading ? (
-           <div>
-           <p>Loading articles...</p>
-           <p>This may take a moment depending on the data size.</p>
-         </div>
+          <div>
+            <p>Loading articles...</p>
+            <p>This may take a moment depending on the data size.</p>
+          </div>
         ) : error ? (
           <div>Error: {error}</div>
         ) : (
@@ -91,7 +91,7 @@ const InfoArticles = () => {
                 <small className="text-gray-500">
                   {article.dateAdded
                     ? article.dateAdded.toDate().toLocaleString()
-                    : 'N/A'}
+                    : "N/A"}
                 </small>
                 <div className="flex items-center space-x-4">
                   <button
